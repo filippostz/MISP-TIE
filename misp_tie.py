@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 #Written by mohlcyber v.0.1
+#Edited by filippostz
 
 import requests
 import sys
@@ -77,13 +78,23 @@ class TIE():
                 client.connect()
                 tie_client = TieClient(client)
 
-                tie_client.set_external_file_reputation(
+                if len(hash) == 40:
+                    #tie_client.set_external_file_reputation(
+                    tie_client.set_file_reputation(
                     self.tie_rep,
-                    {'md5': hash},
+                    {'sha1': hash},
                     filename='MISP Hash {0}'.format(str(eventid)),
                     comment='External Reputation set via OpenDXL')
+                    print('SUCCESS: Successfully pushed SHA1 {0} to TIE.'.format(str(hash)))
 
-                print('SUCCESS: Successfully pushed MD5 {0} to TIE.'.format(str(hash)))
+                if len(hash) == 64:
+                    #tie_client.set_external_file_reputation(
+                    tie_client.set_file_reputation(
+                    self.tie_rep,
+                    {'sha256': hash},
+                    filename='MISP Hash {0}'.format(str(eventid)),
+                    comment='External Reputation set via OpenDXL')
+                    print('SUCCESS: Successfully pushed SHA256 {0} to TIE.'.format(str(hash)))
 
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -91,9 +102,24 @@ class TIE():
                   .format(location=__name__, funct_name=sys._getframe().f_code.co_name, line_no=exc_tb.tb_lineno,
                           error=str(e)))
 
+class URL_FEED():
+
+    def set_url(self, threat_feed_url):
+        self.threat_feed_url = threat_feed_url
+
+    def get(self):
+        feeds = urlopen(self.threat_feed_url).read().decode('utf-8').split('\n')
+        return feeds
 
 if __name__ == '__main__':
-    while True:
-        misp = MISP()
-        misp.get_event()
-        time.sleep(60)
+
+    threat_feed_url = "http..."
+    tie = TIE()
+    remote_feeds = URL_FEED()
+    remote_feeds.set_url(threat_feed_url)
+    feeds = remote_feeds.get()
+
+    counter = 0
+    for feed in feeds:
+        counter = counter + 1
+        tie.set_rep(counter,feed)
