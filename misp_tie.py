@@ -5,6 +5,9 @@
 import requests
 import sys
 import time
+from datetime import datetime
+import urllib
+from urllib.request import urlopen
 
 from pymisp import ExpandedPyMISP
 from dxlclient.client import DxlClient
@@ -83,7 +86,7 @@ class TIE():
                     tie_client.set_file_reputation(
                     self.tie_rep,
                     {'sha1': hash},
-                    filename='MISP Hash {0}'.format(str(eventid)),
+                    filename='Threat Feed: {0}'.format(str(eventid)),
                     comment='External Reputation set via OpenDXL')
                     print('SUCCESS: Successfully pushed SHA1 {0} to TIE.'.format(str(hash)))
 
@@ -92,7 +95,7 @@ class TIE():
                     tie_client.set_file_reputation(
                     self.tie_rep,
                     {'sha256': hash},
-                    filename='MISP Hash {0}'.format(str(eventid)),
+                    filename='Threat Feed: {0}'.format(str(eventid)),
                     comment='External Reputation set via OpenDXL')
                     print('SUCCESS: Successfully pushed SHA256 {0} to TIE.'.format(str(hash)))
 
@@ -122,4 +125,6 @@ if __name__ == '__main__':
     counter = 0
     for feed in feeds:
         counter = counter + 1
-        tie.set_rep(counter,feed)
+        now = datetime.now()
+        now = now.strftime("%Y/%m/%d %H:%M:%S")
+        tie.set_rep(now + " [" + str(counter) + "]",feed)
