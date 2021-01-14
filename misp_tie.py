@@ -22,7 +22,7 @@ misp_key = 'apikey'
 misp_verifycert = False
 misp_tag = 'TIE Set Reputation'
 
-dxl_config = 'path to dxlclient.config'
+dxl_config = 'dxlclient.config'
 
 # TIE Reputation Level following options:
 # TrustLevel.KNOWN_TRUSTED_INSTALLER
@@ -105,6 +105,43 @@ class TIE():
                   .format(location=__name__, funct_name=sys._getframe().f_code.co_name, line_no=exc_tb.tb_lineno,
                           error=str(e)))
 
+    def set_reps(self, hashs):
+        try:
+            with DxlClient(self.config) as client:
+                client.connect()
+                tie_client = TieClient(client)
+
+                counter = 0
+                for hash in hashs:
+                    now = datetime.now()
+                    now = now.strftime("%Y/%m/%d %H:%M:%S")
+
+                    if len(hash) == 40:
+                        #tie_client.set_external_file_reputation(
+                        tie_client.set_file_reputation(
+                        self.tie_rep,
+                        {'sha1': hash},
+                        filename='Threat Feed: {0}'.format(now + " [" + str(counter) + "]"),
+                        comment='External Reputation set via OpenDXL')
+                        counter = counter + 1
+                        print('SUCCESS: Successfully pushed SHA1 {0} to TIE.'.format(str(hash)))
+
+                    if len(hash) == 64:
+                        #tie_client.set_external_file_reputation(
+                        tie_client.set_file_reputation(
+                        self.tie_rep,
+                        {'sha256': hash},
+                        filename='Threat Feed: {0}'.format(now + " [" + str(counter) + "]"),
+                        comment='External Reputation set via OpenDXL')
+                        counter = counter + 1
+                        print('SUCCESS: Successfully pushed SHA256 {0} to TIE.'.format(str(hash)))
+
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print('ERROR: Error in {location}.{funct_name}() - line {line_no} : {error}'
+                  .format(location=__name__, funct_name=sys._getframe().f_code.co_name, line_no=exc_tb.tb_lineno,
+                          error=str(e)))
+
 class URL_FEED():
 
     def set_url(self, threat_feed_url):
@@ -122,9 +159,4 @@ if __name__ == '__main__':
     remote_feeds.set_url(threat_feed_url)
     feeds = remote_feeds.get()
 
-    counter = 0
-    for feed in feeds:
-        counter = counter + 1
-        now = datetime.now()
-        now = now.strftime("%Y/%m/%d %H:%M:%S")
-        tie.set_rep(now + " [" + str(counter) + "]",feed)
+    tie.set_reps(feeds)
